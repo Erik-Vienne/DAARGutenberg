@@ -7,7 +7,7 @@ MIN_WORDS = 10000
 
 NB_BOOKS = 1664
 
-DUMP_URL = "https://gutendex.com/books/?page="
+DUMP_URL = "https://gutendex.com/books/?languages=en&page="
 
 DL_PATH = "books/"
 

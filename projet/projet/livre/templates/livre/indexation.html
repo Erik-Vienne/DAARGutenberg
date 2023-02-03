@@ -1,0 +1,15 @@
+{% extends "livre/base.html" %}
+{% load static %}
+
+{% block title %}Indexation de livre{% endblock %}
+
+{% block content %}
+
+
+<br>
+<form action="" method="post">    
+  {% csrf_token %} 
+  <input type="submit" value="Indexer">
+</form>
+
+{% endblock %}

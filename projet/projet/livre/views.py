@@ -19,3 +19,13 @@ def rechercher(request):
     else:
         form = RecupereRequeteForm(request.POST)
     return render(request, 'livre/recherche.html', {'form' : form, 'contenu': ""})
+
+
+
+
+def indexer(request):
+    if request.method == 'POST' :        
+        print("coucou")
+        # lancer l'indexation
+
+    return render(request, 'livre/indexation.html')

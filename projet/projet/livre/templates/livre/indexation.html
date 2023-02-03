@@ -7,8 +7,9 @@
 
 
 <br>
-<form action="" method="post">    
-  {% csrf_token %} 
+<form enctype="multipart/form-data" action="" method="post">
+  {% csrf_token %}
+  <input type="file" value="Importer le json" name="DB_jsonfile" id="DB_jsonfile" accept="application/json" required>
   <input type="submit" value="Indexer">
 </form>
 

@@ -2,6 +2,8 @@ from django.shortcuts import render
 
 from livre.forms import *
 
+
+from livre.models import Livre, Index, Mot
 #import requests
 import time
 
@@ -27,5 +29,12 @@ def indexer(request):
     if request.method == 'POST' :        
         print("coucou")
         # lancer l'indexation
+
+        Livre.objects.create(
+                idLivre = 12,
+                titre = "blabla",
+                auteur = "blabla",
+                lien = "blabla",
+            )
 
     return render(request, 'livre/indexation.html')

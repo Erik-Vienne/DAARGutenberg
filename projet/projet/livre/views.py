@@ -12,9 +12,9 @@ import time
 
 
 def rechercher(request):
-    if request.method == 'POST' :
+    if request.method == 'POST':
         form = RecupereRequeteForm(request.POST)
-        if form.is_valid() :
+        if form.is_valid():
             contenu = form.cleaned_data['champ']
             contenuListe = contenu.split()
 
@@ -45,7 +45,7 @@ def rechercher(request):
 
             print(listeTotale)
 
-            return render(request, 'livre/recherche.html', {'form': form, 'contenu':contenu})
+            return render(request, 'livre/recherche.html', {'form': form, 'contenu': contenu})
 
     else:
         form = RecupereRequeteForm(request.POST)

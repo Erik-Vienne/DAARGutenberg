@@ -21,10 +21,10 @@ async def download_book(book_id, semaphore):
                     if response_text:
                         book_info = json.loads(response_text)
                         for book in book_info['results']:
-                            title = str(book['title'])
+                            title = str(str(book['id']) + "-" + book['title'])
                             title = title.replace(' ', '_')
                             if not os.path.exists("books/" + title + ".txt") and (
-                                    'text/plain' in book['formats'].keys()) and len(title) <= 252:
+                                    'text/plain' in book['formats'].keys()) and len(title) <= 249:
                                 dl_url = book['formats']['text/plain']
                                 async with session.get(dl_url) as download_response:
                                     if download_response.status == 200:
@@ -34,7 +34,8 @@ async def download_book(book_id, semaphore):
                                             f.write(content)
                                         print(f"Livre {title} téléchargé avec succès dans le dossier books.")
                                     else:
-                                        print(f"Echec du téléchargement du livre {title}, veuillez vérifier votre connexion internet ou l'ID du livre.")
+                                        print(
+                                            f"Echec du téléchargement du livre {title}, veuillez vérifier votre connexion internet ou l'ID du livre.")
                     else:
                         print(f"Réponse vide pour le livre {book_id}.")
                 else:

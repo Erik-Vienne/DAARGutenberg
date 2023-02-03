@@ -1,95 +1,51 @@
 import asyncio
+import aiohttp
 import os
-import urllib.request
-import requests
+import json
 
-MIN_WORDS = 10000
-
-NB_BOOKS = 1664
-
-DUMP_URL = "https://gutendex.com/books/?languages=en&page="
-
-DL_PATH = "books/"
+TOTAL_BOOKS = 1664
 
 
-def makeBooksDir():
-    if not os.path.isdir("books"):
-        os.makedirs("books")
+async def download_book(book_id, semaphore):
+    if len(os.listdir("books/")) >= TOTAL_BOOKS:
+        print("Le nombre de livre attendu à été atteint !")
+        return
+
+    async with semaphore:
+        async with aiohttp.ClientSession() as session:
+            url = "http://gutendex.com/books/?language=en&min_words=10000&page={}".format(book_id)
+            print("Dumping page", book_id)
+            async with session.get(url) as response:
+                if response.status == 200:
+                    response_text = await response.text()
+                    if response_text:
+                        book_info = json.loads(response_text)
+                        for book in book_info['results']:
+                            title = str(book['title'])
+                            title = title.replace(' ', '_')
+                            if not os.path.exists("books/" + title + ".txt") and (
+                                    'text/plain' in book['formats'].keys()) and len(title) <= 252:
+                                dl_url = book['formats']['text/plain']
+                                async with session.get(dl_url) as download_response:
+                                    if download_response.status == 200:
+                                        content = await download_response.read()
+                                        book_path = os.path.join("books", "{}.txt".format(title))
+                                        with open(book_path, "wb") as f:
+                                            f.write(content)
+                                        print(f"Livre {title} téléchargé avec succès dans le dossier books.")
+                                    else:
+                                        print(f"Echec du téléchargement du livre {title}, veuillez vérifier votre connexion internet ou l'ID du livre.")
+                    else:
+                        print(f"Réponse vide pour le livre {book_id}.")
+                else:
+                    print(f"Echec de la récupération des informations du livre {book_id}.")
 
 
-def countBooks(dir):
-    cpt = 0
-    for path in os.listdir(dir):
-        if os.path.isfile(path):
-            cpt += 1
-    return cpt
+async def main():
+    semaphore = asyncio.Semaphore(5)
+    os.makedirs("books", exist_ok=True)
+    tasks = [download_book(book_id, semaphore) for book_id in range(1, TOTAL_BOOKS + 1)]
+    await asyncio.gather(*tasks)
 
 
-def getBooksFromUrl(url):
-    return requests.get(url).json()
-
-
-def getBooks(url):
-    jsonResponse = getBooksFromUrl(url)
-    if "results" in jsonResponse:
-        return jsonResponse["results"]
-
-
-def getBook(url, id):
-    json = getBooks(url)[id]
-    if "formats" in json:
-        if "text/plain" in json["formats"]:
-            return json["formats"]["text/plain"]
-
-
-def saveTxtFile(path, url, name):
-    urllib.request.urlretrieve(str(url), path + str(name) + ".txt")
-
-
-def countWords(url, id):
-    text = getBook(url, id)
-    if text is not None:
-        res = requests.get(text)
-        strtext = res.text
-        return len(strtext.split())
-    else:
-        print(text)
-        return -1
-
-
-async def downloadTxtFiles(url, gutenpage):
-    cpt = 0
-    index = 0
-    page = gutenpage
-    url = url + str(page)
-    try:
-        books = getBooks(url)
-        for book in books:
-            if index < len(books):
-                # if len(book["title"]) < 255:
-                title = book["title"]
-                # else:
-                #     title = book["id"]
-                nbwords = countWords(url, index)
-                print("Book : " + str(title) + " has ", nbwords, " words")
-                if nbwords >= MIN_WORDS:
-                    saveTxtFile(DL_PATH, getBook(url, index), title)
-                    index += 1
-                    cpt += 1
-            index += 1
-        print("Page : " + str(page))
-        print("nbBooks : ", cpt)
-    except:
-        print("error while retrieving books, please check the url")
-
-
-makeBooksDir()
-i = 123
-
-print("Dumping Gutendex....")
-while countBooks(DL_PATH) < NB_BOOKS:
-    asyncio.run(downloadTxtFiles(DUMP_URL, i))
-    print("There is : " + str(countBooks(DL_PATH)) + " downloaded from url page ", i)
-    i += 1
-
-print("Gutendex Dumped :)")
+asyncio.run(main())

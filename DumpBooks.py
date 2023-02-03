@@ -63,4 +63,4 @@ async def main():
 asyncio.run(main())
 
 with open("jsontoDB.json", "w") as res:
-    json.dump(jsontoDB, res)
+    json.dump(jsontoDB, res, indent=3)

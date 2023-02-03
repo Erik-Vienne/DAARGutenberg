@@ -1,9 +1,12 @@
 from django.shortcuts import render
+from django.utils.datastructures import MultiValueDict
 
 from livre.forms import *
 
 import os
 import json
+import string
+import re
 
 from livre.models import Livre, Index, Mot
 # import requests
@@ -59,18 +62,68 @@ def indexer(request):
         print("coucou")
         # lancer l'indexation
 
-        print("################################")
-        jsonfile = request.FILES['DB_jsonfile'].read()
-        # jsonfile = jsonfile.decode('utf-8')
-        jsonBooks = json.loads(jsonfile)
-        for book in jsonBooks:
-            if 'id' in book.keys() and 'title' in book.keys() and 'author' in book.keys() and 'link' in book.keys():
-                Livre.objects.create(
-                    idLivre=book['id'],
-                    titre=book['title'],
-                    auteur=book['author'][0]['name'],
-                    lien=book['link'],
-                )
+        # jsonfile = request.FILES['indexation'].read()
+        # print(jsonfile)
+        # print(request.FILES.getlist('indexation'))
 
         print("################################")
+        mdict = MultiValueDict(request.FILES)
+
+        print(mdict.getlist('file_field'))
+
+        for file in mdict.getlist('file_field'):
+            if str(file).endswith('.json'):
+                jsontoDB = open(file.temporary_file_path())
+                jsonBooks = json.loads(jsontoDB.read())
+                for book in jsonBooks:
+                    if 'id' in book.keys() and 'title' in book.keys() and 'author' in book.keys() and 'link' in book.keys():
+                        if len(Livre.objects.filter(idLivre=book['id'])) == 0:
+                            Livre.objects.create(
+                                idLivre=book['id'],
+                                titre=book['title'],
+                                auteur=book['author'][0]['name'],
+                                lien=book['link'],
+                            )
+                print("upload des livres ok")
+                break
+
+        for file in mdict.getlist('file_field'):
+            if str(file).endswith('.txt'):
+                book = open(file.temporary_file_path()).read()
+                tmp = ' '.join(book.splitlines())
+                tmp = tmp.translate(str.maketrans('', '', string.punctuation))
+                tmp = tmp.replace('"', ' ')
+                tmp = tmp.replace('“', ' ')
+                tmp = tmp.replace('”', ' ')
+                res = tmp.split(' ')
+                occ = dict()
+                for w in res:
+                    if w in occ:
+                        occ[w] += 1
+                    else:
+                        occ[w] = 1
+                for w in occ.keys():
+                    if len(Mot.objects.filter(mot=w)) == 0:
+                        print("Nouveau Mot")
+                        Mot.objects.create(
+                            mot=w
+                        )
+                    idlivre = int(str(file).split('-')[0])
+                    livre = Livre.objects.filter(idLivre=idlivre)[0]
+
+                    mot = Mot.objects.filter(mot=w)[0]
+
+                    if len(Index.objects.filter(idLivre=livre, idMot=mot)) == 0:
+                        print("nouvel index")
+                        Index.objects.create(
+                            idLivre=livre,
+                            idMot=mot,
+                            nbOccurrence=occ[w],
+                        )
+
+            else:
+                print("probleme pas un txt : " + file)
+
+        print("################################")
+
     return render(request, 'livre/indexation.html')

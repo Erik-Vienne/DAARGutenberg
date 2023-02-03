@@ -5,6 +5,8 @@ import json
 
 TOTAL_BOOKS = 1664
 
+jsontoDB = []
+
 
 async def download_book(book_id, semaphore):
     if len(os.listdir("books/")) >= TOTAL_BOOKS:
@@ -26,6 +28,15 @@ async def download_book(book_id, semaphore):
                             if not os.path.exists("books/" + title + ".txt") and (
                                     'text/plain' in book['formats'].keys()) and len(title) <= 249:
                                 dl_url = book['formats']['text/plain']
+
+                                currentBook = {
+                                    'title': book['title'],
+                                    'id': book['id'],
+                                    'link': "https://www.gutenberg.org/ebooks/" + str(book['id']),
+                                    'author': book['authors']
+                                }
+                                jsontoDB.append(currentBook)
+
                                 async with session.get(dl_url) as download_response:
                                     if download_response.status == 200:
                                         content = await download_response.read()
@@ -45,8 +56,11 @@ async def download_book(book_id, semaphore):
 async def main():
     semaphore = asyncio.Semaphore(5)
     os.makedirs("books", exist_ok=True)
-    tasks = [download_book(book_id, semaphore) for book_id in range(1, TOTAL_BOOKS + 1)]
+    tasks = [download_book(book_id, semaphore) for book_id in range(1, 2)]
     await asyncio.gather(*tasks)
 
 
 asyncio.run(main())
+
+with open("jsontoDB.json", "w") as res:
+    json.dump(jsontoDB, res)

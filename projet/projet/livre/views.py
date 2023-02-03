@@ -16,6 +16,35 @@ def rechercher(request):
         form = RecupereRequeteForm(request.POST)
         if form.is_valid() :
             contenu = form.cleaned_data['champ']
+            contenuListe = contenu.split()
+
+            listeTotale = [] 
+
+            for i in contenuListe:
+                #mot = Mot.objects.filter(mot=i)
+                mot = Mot.objects.filter(mot__regex=i)
+                listeIdMot = []
+                for j in mot :
+                    listeIdMot.append(j.id)
+                
+                print("listeidmot " ,listeIdMot)
+                listeIdLivre = []
+                
+                for k in listeIdMot :
+                    index = Index.objects.filter(idMot=k) 
+                    for l in index :
+                        listeIdLivre.append(l.idLivre.idLivre)
+                        print("listeidLivre " , listeIdLivre)
+
+                # Sinon cas de depart ou pas de correspondance
+                if listeTotale != [] :
+                    listeTotale = list(set(listeTotale) & set(listeIdLivre))
+                else :
+                    listeTotale = listeIdLivre
+
+
+            print(listeTotale)
+
             return render(request, 'livre/recherche.html', {'form': form, 'contenu':contenu})
 
     else:

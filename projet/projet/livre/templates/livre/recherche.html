@@ -17,6 +17,18 @@
     <br>
     <input type="submit" value="Envoyer">
 
+    {% for l in livres %}
+    
+      <h5>{{ l.titre }}</h5>
+      <p> {{ l.auteur}}</p>
+    
+      <p>  
+      <a href= {{ l.lien }}> Lien vers Gutenberg </a> 
+      </p> 
+      <hr>
+    
+  {% endfor %}
+
     <p> {{ contenu }} </p>
   </form>
 

@@ -5,6 +5,11 @@
 
 {% block content %}
 
+{% if messages %}
+    {% for message in messages %}
+        <div class = "alert alert-{{message.tags}}">{{message}}</div>
+    {% endfor %}
+{% endif %}
 
 <br>
 <form enctype="multipart/form-data" action="" method="post">
@@ -14,18 +19,5 @@
     <input type="submit" value="Indexer">
 </form>
 
-<!--<script>-->
-<!--    files = document.querySelector("#file_input").files;-->
-<!--    document.querySelector("#file_input").addEventListener("change", function () {-->
-<!--        let files = document.querySelector("#file_input").files;-->
-<!--        let directories = {};-->
-<!--        for (var file of files) {-->
-<!--            file.webkitRelativePath-->
-<!--            directories[file.name] = file.webkitRelativePath-->
-<!--        }-->
-<!--        directories = JSON.stringify(directories);-->
-<!--        document.querySelector("#directories").value = directories-->
-<!--    });-->
-<!--</script>-->
 
 {% endblock %}

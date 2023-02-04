@@ -50,7 +50,12 @@ def rechercher(request):
 
             print(listeTotale)
 
-            return render(request, 'livre/recherche.html', {'form': form, 'contenu': contenu})
+            livres = []
+
+            for m in listeTotale :
+                livres.append(Livre.objects.get(pk = m) )
+
+            return render(request, 'livre/recherche.html', {'form': form, 'contenu': contenu, 'livres': livres})
 
     else:
         form = RecupereRequeteForm(request.POST)
@@ -59,7 +64,7 @@ def rechercher(request):
 
 def indexer(request):
     if request.method == 'POST':
-        print("coucou")
+        
         # lancer l'indexation
 
         # jsonfile = request.FILES['indexation'].read()
@@ -69,7 +74,7 @@ def indexer(request):
         print("################################")
         mdict = MultiValueDict(request.FILES)
 
-        print(mdict.getlist('file_field'))
+        #print(mdict.getlist('file_field'))
 
         for file in mdict.getlist('file_field'):
             if str(file).endswith('.json'):
@@ -78,10 +83,16 @@ def indexer(request):
                 for book in jsonBooks:
                     if 'id' in book.keys() and 'title' in book.keys() and 'author' in book.keys() and 'link' in book.keys():
                         if len(Livre.objects.filter(idLivre=book['id'])) == 0:
+                            
+                            if len(book['author']) == 0 :
+                                auteur = ""
+                            else:
+                                auteur = book['author'][0]['name']
+
                             Livre.objects.create(
                                 idLivre=book['id'],
                                 titre=book['title'],
-                                auteur=book['author'][0]['name'],
+                                auteur= auteur,
                                 lien=book['link'],
                             )
                 print("upload des livres ok")

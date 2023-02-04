@@ -26,7 +26,7 @@ async def download_book(book_id, semaphore):
                             title = str(str(book['id']) + "-" + book['title'])
                             title = title.replace(' ', '_')
                             if not os.path.exists("books/" + title + ".txt") and (
-                                    'text/plain' in book['formats'].keys()) and len(title) <= 249:
+                                    'text/plain' in book['formats'].keys()) and len(title) <= 249 and '"' not in title and ':' not in title and '?' not in title and '/' not in title:
                                 dl_url = book['formats']['text/plain']
 
                                 currentBook = {
@@ -56,7 +56,7 @@ async def download_book(book_id, semaphore):
 async def main():
     semaphore = asyncio.Semaphore(5)
     os.makedirs("books", exist_ok=True)
-    tasks = [download_book(book_id, semaphore) for book_id in range(1, 2)]
+    tasks = [download_book(book_id, semaphore) for book_id in range(1, 150)]
     await asyncio.gather(*tasks)
 
 

@@ -24,3 +24,8 @@ class Index(models.Model):
             )
         ]
 
+class Jaccard(models.Model):
+    idLivre1 = models.ForeignKey(Livre, on_delete=models.CASCADE, blank=True, null=True, related_name='l1')
+    idLivre2 = models.ForeignKey(Livre, on_delete=models.CASCADE, blank=True, null=True, related_name='l2')
+    distance = models.IntegerField()
+

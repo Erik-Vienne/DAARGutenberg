@@ -1,0 +1,21 @@
+{% extends "livre/base.html" %}
+{% load static %}
+
+{% block title %}Indexation de livre{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class = "alert alert-{{message.tags}}">{{message}}</div>
+    {% endfor %}
+{% endif %}
+
+<br>
+<form enctype="multipart/form-data" action="" method="post">
+    {% csrf_token %}
+    <input type="submit" value="Indexer">
+</form>
+
+
+{% endblock %}

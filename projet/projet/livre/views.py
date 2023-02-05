@@ -8,7 +8,7 @@ import json
 import string
 import re
 
-from livre.models import Livre, Index, Mot
+from livre.models import Livre, Index, Mot, Jaccard
 # import requests
 import time
 from datetime import timedelta
@@ -54,8 +54,8 @@ def rechercher(request):
 
             livres = []
 
-            
-
+            #CreerJaccard()
+        
             # enleve les doublons :
             listeTotale = list(set(listeTotale))
             #print(listeTotale)
@@ -203,3 +203,70 @@ def indexer(request):
         print("################################")
 
     return render(request, 'livre/indexation.html')
+
+
+def CreerJaccard(request) :
+    if request.method == 'POST':
+        print ("debut mot")
+        livre = Livre.objects.all()
+        nbLivre = len(livre)
+
+        dicIdIndice = dict()
+        dicIndiceId = dict()
+        indice = 0
+        livres = Livre.objects.all()
+
+        # deuxieme element = retenue
+        for w in livres:
+            dicIdIndice[w.idLivre] = (indice, 0)
+            dicIndiceId[indice] = w.idLivre
+            indice = indice + 1
+
+        table = [[(0,0) for x in range(nbLivre)] for y in range(nbLivre)]
+        print("table cree")
+
+        compteur = 0 
+
+        mot = Mot.objects.all()
+        for i in mot :
+            compteur = compteur +1
+            if(compteur % 1000 ) == 0 :
+                print(compteur) 
+
+            ind = Index.objects.filter(idMot = i.id)
+                    #print(i.mot, " :" , len(ind) )
+            for j in ind :
+                dicIdIndice[j.idLivre] = (dicIdIndice[j.idLivre][0], dicIdIndice[j.idLivre][0] + j.nbOccurence)
+                for k in ind :
+                    if(j.idLivre.idLivre > k.idLivre.idLivre) :
+                        # on enlève j.nbOccurence car on le rajoutera après partout
+                        num = table[j][k][0] + max(j.nbOccurrence, k.nbOccurrence) - min(j.nbOccurrence, k.nbOccurrence) - j.nbOccurrence
+                        denom = table[j][k][0] + max(j.nbOccurrence, k.nbOccurrence) - j.nbOccurrence
+                        table[j][k] = (num, denom)
+                        
+
+        print("fin mot")            
+        
+        for x in range(nbLivre) :
+            for y in range(nbLivre) :
+            
+                # comparaison entre deux idLivre en miroir avec le calcul précédent (la case inverse est vide)
+                if dicIndiceId[x] > dicIndiceId[y] :
+                    idLivre1 = dicIndiceId[i]
+                    idLivre2 = dicIndiceId[j]
+                    
+                    numerateur = table[x][y][0] + dicIdIndice[idLivre1] [1] + dicIdIndice[idLivre2] [1] 
+                    denominateur = table[x][y][1] + dicIdIndice[idLivre2] [1] + dicIdIndice[idLivre2] [1]
+                    
+                    Jaccard.objects.create(
+                        idLivre1 = idLivre1,
+                        idLivre2 = idLivre2,
+                        distance = ( numerateur/ denominateur )
+                    ) 
+                    
+
+
+        print("fin index jaccard")
+        return render(request, 'livre/CreerJaccard.html')
+    else :  
+        return render(request, 'livre/CreerJaccard.html')

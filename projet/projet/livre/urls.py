@@ -10,6 +10,7 @@ urlpatterns = [
     path('rechercheAvancee/', views.rechercher, name='rechercheAvancee'),
 
     path('indexation/', views.indexer, name='indexation'),
+    path('CreerJaccard/', views.CreerJaccard, name='jaccard'),
 
 
 

@@ -236,7 +236,8 @@ def CreerJaccard(request) :
             ind = Index.objects.filter(idMot = i.id)
                     #print(i.mot, " :" , len(ind) )
             for j in ind :
-                dicIdIndice[j.idLivre] = (dicIdIndice[j.idLivre][0], dicIdIndice[j.idLivre][0] + j.nbOccurence)
+                              
+                dicIdIndice[j.idLivre] = ( (dicIdIndice[j.idLivre.idLivre])[0], (dicIdIndice[j.idLivre.idLivre]) [1] + j.nbOccurrence )
                 for k in ind :
                     if(j.idLivre.idLivre > k.idLivre.idLivre) :
                         # on enlève j.nbOccurence car on le rajoutera après partout

@@ -29,11 +29,13 @@ def rechercher(request):
             listeTotale = []
 
             for i in contenuListe:
-                # mot = Mot.objects.filter(mot=i)
-                mot = Mot.objects.filter(mot__regex=i)
+                #mot = Mot.objects.filter(mot=i)
+                mot = Mot.objects.filter(mot__regex='^' + i)
                 listeIdMot = []
                 for j in mot:
                     listeIdMot.append(j.id)
+
+                listeIdMot = list(set(listeIdMot))
 
                 #print("listeidmot ", listeIdMot)
                 listeIdLivre = []
@@ -51,6 +53,12 @@ def rechercher(request):
                     listeTotale = listeIdLivre
 
             livres = []
+
+            
+
+            # enleve les doublons :
+            listeTotale = list(set(listeTotale))
+            #print(listeTotale)
 
             listeTotale = jaccard(listeTotale)
 

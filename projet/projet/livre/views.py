@@ -18,7 +18,6 @@ from livre.graphs import jaccard
 
 # Create your views here.
 
-
 def rechercher(request):
     if request.method == 'POST':
         form = RecupereRequeteForm(request.POST)
@@ -29,7 +28,7 @@ def rechercher(request):
             listeTotale = []
 
             for i in contenuListe:
-                #mot = Mot.objects.filter(mot=i)
+                # mot = Mot.objects.filter(mot=i)
                 mot = Mot.objects.filter(mot__regex='^' + i)
                 listeIdMot = []
                 for j in mot:
@@ -37,7 +36,7 @@ def rechercher(request):
 
                 listeIdMot = list(set(listeIdMot))
 
-                #print("listeidmot ", listeIdMot)
+                # print("listeidmot ", listeIdMot)
                 listeIdLivre = []
 
                 for k in listeIdMot:
@@ -54,11 +53,11 @@ def rechercher(request):
 
             livres = []
 
-            #CreerJaccard()
-        
+            # CreerJaccard()
+
             # enleve les doublons :
             listeTotale = list(set(listeTotale))
-            #print(listeTotale)
+            # print(listeTotale)
 
             listeTotale = jaccard(listeTotale)
 
@@ -93,7 +92,7 @@ def indexer(request):
         mdict = MultiValueDict(request.FILES)
         file_list = mdict.getlist('file_field')
         books = []
-        cpt = 0
+        cpt = 1
         total = len(file_list)
         start = time.time()
 
@@ -105,7 +104,7 @@ def indexer(request):
 
         if jsonfile:
             jsonfile = jsonfile[0]
-            print("joson trouvé !")
+            print("json trouvé !")
             jsontoDB = open(jsonfile.temporary_file_path())
             jsonBooks = json.loads(jsontoDB.read())
             for book in jsonBooks:
@@ -127,7 +126,6 @@ def indexer(request):
             print("jsonNotFound")
             messages.info(request, "Le fichier JSON n'a pas été trouvé")
             return render(request, 'livre/indexation.html')
-
 
         print("analyse des livres")
 
@@ -187,27 +185,29 @@ def indexer(request):
                     if w not in dicMots:
                         mot = Mot.objects.create(mot=w)
                         dicMots[w] = mot.id
+                    else:
+                        dicMots[w] = Mot.objects.filter(mot=w)[0].id
 
                 Index.objects.bulk_create([
                     Index(idLivre=livre, idMot_id=dicMots[w], nbOccurrence=occ[w])
                     for w in occ.keys() if w in dicMots
                 ])
 
-                print("########## Livre " + str(cpt) + " sur " + str(total) + " Ok")
-                print("########## Durrée de l'indexation : " + str(timedelta(seconds=(time.time()- start))) )
+                print("########## Livre " + str(cpt) + " sur " + str(total-1) + " Ok")
+                print("########## Durrée de l'indexation : " + str(timedelta(seconds=(time.time() - start))))
                 cpt += 1
 
             else:
-                print("probleme pas un txt : " + file)
+                print("probleme pas un txt : " + str(file))
 
         print("################################")
 
     return render(request, 'livre/indexation.html')
 
 
-def CreerJaccard(request) :
+def CreerJaccard(request):
     if request.method == 'POST':
-        print ("debut mot")
+        print("debut mot")
         livre = Livre.objects.all()
         nbLivre = len(livre)
 
@@ -222,52 +222,66 @@ def CreerJaccard(request) :
             dicIndiceId[indice] = w.idLivre
             indice = indice + 1
 
-        table = [[(0,0) for x in range(nbLivre)] for y in range(nbLivre)]
+        table = [[(0, 0) for x in range(nbLivre)] for y in range(nbLivre)]
         print("table cree")
 
-        compteur = 0 
+        compteur = 0
 
         mot = Mot.objects.all()
-        for i in mot :
-            compteur = compteur +1
-            if(compteur % 1000 ) == 0 :
-                print(compteur) 
+        mot = mot[:20000]
+        print(mot)
+        for i in mot:
 
-            ind = Index.objects.filter(idMot = i.id)
-                    #print(i.mot, " :" , len(ind) )
-            for j in ind :
-                              
-                dicIdIndice[j.idLivre] = ( (dicIdIndice[j.idLivre.idLivre])[0], (dicIdIndice[j.idLivre.idLivre]) [1] + j.nbOccurrence )
-                for k in ind :
-                    if(j.idLivre.idLivre > k.idLivre.idLivre) :
+            compteur = compteur + 1
+            if (compteur % 1000) == 0:
+                print(compteur)
+
+            # print(i.id)
+            ind = Index.objects.filter(idMot_id=2191187)
+
+            print(ind)
+            print(len(ind))
+
+            # print(i.mot, " :" , len(ind) )
+            for j in ind:
+                livre = Livre.objects.filter(idLivre=j.idLivre_id)
+                if len(livre) > 0:
+                    livre = livre[0]
+                dicIdIndice[j.idLivre_id] = (
+                    (dicIdIndice[livre.idLivre])[0], (dicIdIndice[livre.idLivre])[1] + j.nbOccurrence)
+                for k in ind:
+                    livre2 = Livre.objects.filter(idLivre=k.idLivre_id)
+                    if len(livre2) > 0:
+                        livre2 = livre2[0]
+                    if livre.idLivre != livre2.idLivre:
                         # on enlève j.nbOccurence car on le rajoutera après partout
-                        num = table[j][k][0] + max(j.nbOccurrence, k.nbOccurrence) - min(j.nbOccurrence, k.nbOccurrence) - j.nbOccurrence
+                        num = table[j][k][0] + max(j.nbOccurrence, k.nbOccurrence) - min(j.nbOccurrence,
+                                                                                         k.nbOccurrence) - j.nbOccurrence
                         denom = table[j][k][0] + max(j.nbOccurrence, k.nbOccurrence) - j.nbOccurrence
                         table[j][k] = (num, denom)
-                        
 
-        print("fin mot")            
-        
-        for x in range(nbLivre) :
-            for y in range(nbLivre) :
-            
+                        print(num)
+                        print(denom)
+
+        print("fin mot")
+
+        for x in range(nbLivre):
+            for y in range(nbLivre):
+
                 # comparaison entre deux idLivre en miroir avec le calcul précédent (la case inverse est vide)
-                if dicIndiceId[x] > dicIndiceId[y] :
-                    idLivre1 = dicIndiceId[i]
-                    idLivre2 = dicIndiceId[j]
-                    
-                    numerateur = table[x][y][0] + dicIdIndice[idLivre1] [1] + dicIdIndice[idLivre2] [1] 
-                    denominateur = table[x][y][1] + dicIdIndice[idLivre2] [1] + dicIdIndice[idLivre2] [1]
-                    
-                    Jaccard.objects.create(
-                        idLivre1 = idLivre1,
-                        idLivre2 = idLivre2,
-                        distance = ( numerateur/ denominateur )
-                    ) 
-                    
+                if dicIndiceId[x] > dicIndiceId[y]:
+                    idLivre1 = dicIndiceId[x]
+                    idLivre2 = dicIndiceId[y]
 
+                    numerateur = table[x][y][0] + dicIdIndice[idLivre1][1] + dicIdIndice[idLivre2][1]
+                    denominateur = table[x][y][1] + dicIdIndice[idLivre1][1] + dicIdIndice[idLivre2][1]
+                    Jaccard.objects.create(
+                        idLivre1=idLivre1,
+                        idLivre2=idLivre2,
+                        distance=(numerateur / denominateur)
+                    )
 
         print("fin index jaccard")
         return render(request, 'livre/CreerJaccard.html')
-    else :  
+    else:
         return render(request, 'livre/CreerJaccard.html')

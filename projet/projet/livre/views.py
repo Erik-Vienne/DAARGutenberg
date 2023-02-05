@@ -13,6 +13,8 @@ from livre.models import Livre, Index, Mot
 import time
 from datetime import timedelta
 
+from livre.graphs import jaccard
+
 
 # Create your views here.
 
@@ -33,7 +35,7 @@ def rechercher(request):
                 for j in mot:
                     listeIdMot.append(j.id)
 
-                print("listeidmot ", listeIdMot)
+                #print("listeidmot ", listeIdMot)
                 listeIdLivre = []
 
                 for k in listeIdMot:
@@ -48,14 +50,14 @@ def rechercher(request):
                 else:
                     listeTotale = listeIdLivre
 
-            print(listeTotale)
-
             livres = []
 
-            for m in listeTotale:
-                livres.append(Livre.objects.get(pk=m))
+            listeTotale = jaccard(listeTotale)
 
-            return render(request, 'livre/recherche.html', {'form': form, 'contenu': contenu, 'livres': livres})
+            for m in listeTotale:
+                livres.append(Livre.objects.get(pk=m[0]))
+
+            return render(request, 'livre/recherche.html', {'form': form, 'livres': livres})
 
     else:
         form = RecupereRequeteForm(request.POST)
